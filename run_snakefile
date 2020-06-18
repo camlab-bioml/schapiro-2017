@@ -1,0 +1,2 @@
+rm slurm-*
+snakemake -k --profile slurm --jobs 100 
