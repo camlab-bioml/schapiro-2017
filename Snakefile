@@ -46,7 +46,9 @@ channels = list(channels[channels.columns[0]])
 
 rule all:
     input:
-        expand("single-cell-data/{s}.csv", s=samples)
+        expand("single-cell-data/{s}.csv", s=samples),
+        expand("single-cell-data/alt-masks/{alt_s}_{user}.csv", 
+        alt_s = ['Cy1x5_32', 'Cy1x6_33', 'Cy1x8_35'], user = ['Catena', 'Jackson', 'Schulz'])
 
 rule to_csv:
     input:
@@ -69,5 +71,20 @@ rule to_csv:
         df.to_csv(output[0])
 
 
+rule to_csv_alt_masks:
+    input:
+        expand("raw-data/{{alt_s}}/{{alt_s}}/{channel}.tiff", channel=channels)
+    output:
+        "single-cell-data/alt-masks/{alt_s}_{user}.csv"
+    run:
+        sample = wildcards.alt_s
+        user = wildcards.user
+        mask_file = f"raw-data/alt_masks/{user}/{sample}_{user}_mask.tiff"
+        mask = tif.imread(mask_file)
+        files = input
 
+        df_list = [read_sample(mask, f, sample) for f in files]
+        df = pd.concat(df_list, axis=0)
+
+        df.to_csv(output[0])
 
